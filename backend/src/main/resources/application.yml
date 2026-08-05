@@ -1,0 +1,33 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: ferreteria-backend
+
+  datasource:
+    # Ajustado con tus credenciales de Postgres local.
+    # Si en algun momento cambian, tambien podes sobreescribirlas con las
+    # variables de entorno DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD.
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:ferreteria_db}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgre}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      # update: en desarrollo va bien, crea/ajusta tablas solo.
+      # Cuando el proyecto este mas maduro, migrar a Flyway/Liquibase.
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+# Configuracion propia para JWT
+app:
+  jwt:
+    # En produccion, definir JWT_SECRET como variable de entorno (no dejar el default)
+    secret: ${JWT_SECRET:CAMBIAR_ESTE_SECRETO_POR_UNO_LARGO_Y_SEGURO_EN_PRODUCCION_1234567890}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}   # 24 horas

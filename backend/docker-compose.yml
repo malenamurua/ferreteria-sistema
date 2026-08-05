@@ -1,0 +1,42 @@
+version: "3.8"
+
+services:
+
+  db:
+    image: postgres:16-alpine
+    container_name: ferreteria-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-ferreteria_db}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - ferreteria_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: .
+    container_name: ferreteria-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db          # nombre del servicio de arriba, Docker lo resuelve solo
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-ferreteria_db}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      JWT_SECRET: ${JWT_SECRET:-CAMBIAR_ESTE_SECRETO_POR_UNO_LARGO_Y_SEGURO_EN_PRODUCCION_1234567890}
+      SERVER_PORT: 8080
+    ports:
+      - "8080:8080"
+
+volumes:
+  ferreteria_db_data:
