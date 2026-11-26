@@ -29,7 +29,7 @@ export default function Layout() {
           <div className="w-8 h-8 rounded-md bg-accent flex items-center justify-center shrink-0">
             <Wrench className="w-4 h-4 text-accent-ink" strokeWidth={2.5} />
           </div>
-          <span className="font-display font-bold tracking-tight">FERRESYS</span>
+          <span className="font-display font-bold tracking-tight">FERROX</span>
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-1">
@@ -79,7 +79,7 @@ export default function Layout() {
             <div className="w-7 h-7 rounded-md bg-accent flex items-center justify-center">
               <Wrench className="w-3.5 h-3.5 text-accent-ink" strokeWidth={2.5} />
             </div>
-            <span className="font-display font-bold text-sm">FERRESYS</span>
+            <span className="font-display font-bold text-sm">FERROX</span>
           </div>
           <div className="hidden md:block" />
           <button

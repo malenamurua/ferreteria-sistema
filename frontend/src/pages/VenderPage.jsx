@@ -7,6 +7,7 @@ import PageHeader from '../components/PageHeader'
 import Input from '../components/Input'
 import Boton from '../components/Boton'
 import { formatMoneda } from '../utils/format'
+import { generarComprobantePDF } from '../utils/comprobante'
 
 const METODOS_PAGO = [
   { valor: 'EFECTIVO', label: 'Efectivo', icon: Banknote },
@@ -29,7 +30,6 @@ export default function VenderPage() {
     inputRef.current?.focus()
   }, [])
 
-  // Busqueda con un pequeño debounce, para no pegarle al backend en cada tecla
   useEffect(() => {
     if (!busqueda.trim()) {
       setResultados([])
@@ -63,8 +63,6 @@ export default function VenderPage() {
     inputRef.current?.focus()
   }, [])
 
-  // El lector de codigo de barras "escribe" el codigo y aprieta Enter automaticamente.
-  // Interceptamos el Enter: si el texto matchea un codigo exacto, agregamos directo.
   async function handleKeyDown(e) {
     if (e.key !== 'Enter' || !busqueda.trim()) return
     e.preventDefault()
@@ -72,7 +70,6 @@ export default function VenderPage() {
       const producto = await buscarPorCodigoExacto(busqueda.trim())
       agregarAlCarrito(producto)
     } catch {
-      // No matcheo un codigo exacto; si hay resultados de la busqueda por nombre, agregamos el primero
       if (resultados.length > 0) {
         agregarAlCarrito(resultados[0])
       }
@@ -110,6 +107,7 @@ export default function VenderPage() {
       const venta = await registrarVenta(payload)
       setExito(venta)
       setCarrito([])
+      generarComprobantePDF(venta)
     } catch (err) {
       setError(obtenerMensajeError(err))
     } finally {
@@ -138,7 +136,6 @@ export default function VenderPage() {
       <PageHeader titulo="Vender" descripcion="Buscá por nombre o escaneá el código de barras." />
 
       <div className="px-6 grid lg:grid-cols-[1fr_380px] gap-6">
-        {/* Buscador + resultados */}
         <div>
           <div className="relative">
             <ScanLine className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" />
@@ -181,7 +178,6 @@ export default function VenderPage() {
           )}
         </div>
 
-        {/* Carrito */}
         <div className="rounded-lg border border-border bg-surface flex flex-col h-fit lg:sticky lg:top-6">
           <div className="px-4 py-3 border-b border-border">
             <h3 className="font-display font-bold text-sm">Carrito</h3>
