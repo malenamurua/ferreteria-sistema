@@ -15,38 +15,82 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+
 @Component
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
 
+
     private final JwtUtil jwtUtil;
+
     private final UserDetailsService userDetailsService;
 
+
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                     HttpServletResponse response,
-                                     FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain
+    ) throws ServletException, IOException {
+
 
         final String authHeader = request.getHeader("Authorization");
 
+
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+
             filterChain.doFilter(request, response);
             return;
         }
 
+
         final String token = authHeader.substring(7);
-        final String username = jwtUtil.extraerUsername(token);
 
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-            if (jwtUtil.esTokenValido(token, userDetails)) {
-                UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+        try {
+
+            final String username = jwtUtil.extraerUsername(token);
+
+
+            if (username != null &&
+                    SecurityContextHolder.getContext().getAuthentication() == null) {
+
+
+                UserDetails userDetails =
+                        userDetailsService.loadUserByUsername(username);
+
+
+
+                if (jwtUtil.esTokenValido(token, userDetails)) {
+
+
+                    UsernamePasswordAuthenticationToken authToken =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails,
+                                    null,
+                                    userDetails.getAuthorities()
+                            );
+
+
+                    authToken.setDetails(
+                            new WebAuthenticationDetailsSource()
+                                    .buildDetails(request)
+                    );
+
+
+                    SecurityContextHolder.getContext()
+                            .setAuthentication(authToken);
+                }
             }
+
+        } catch (Exception e) {
+
+            // TEMPORAL: para ver en consola por qué falla la validación del JWT.
+            // Sacar este catch (o volver a lanzar la excepción) una vez resuelto.
+            System.out.println("ERROR VALIDANDO JWT: " + e);
+            e.printStackTrace();
         }
+
 
         filterChain.doFilter(request, response);
     }

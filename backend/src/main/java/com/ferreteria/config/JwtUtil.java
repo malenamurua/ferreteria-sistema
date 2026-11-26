@@ -3,7 +3,6 @@ package com.ferreteria.config;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -22,39 +21,60 @@ public class JwtUtil {
     @Value("${app.jwt.expiration-ms}")
     private long expirationMs;
 
+
     private SecretKey getSigningKey() {
-        // El secreto se usa directamente como bytes UTF-8 (debe ser largo, ver application.yml)
         return Keys.hmacShaKeyFor(secret.getBytes());
     }
 
+
     public String generarToken(UserDetails userDetails) {
+
         return Jwts.builder()
                 .subject(userDetails.getUsername())
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + expirationMs))
+                .expiration(
+                        new Date(System.currentTimeMillis() + expirationMs)
+                )
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
+
     public String extraerUsername(String token) {
+
         return extraerClaim(token, Claims::getSubject);
     }
 
+
     public boolean esTokenValido(String token, UserDetails userDetails) {
-        final String username = extraerUsername(token);
-        return username.equals(userDetails.getUsername()) && !estaExpirado(token);
+
+        String username = extraerUsername(token);
+
+        return username.equals(userDetails.getUsername())
+                && !estaExpirado(token);
     }
+
 
     private boolean estaExpirado(String token) {
-        return extraerClaim(token, Claims::getExpiration).before(new Date());
+
+        return extraerClaim(
+                token,
+                Claims::getExpiration
+        ).before(new Date());
     }
 
-    private <T> T extraerClaim(String token, Function<Claims, T> resolver) {
+
+    private <T> T extraerClaim(
+            String token,
+            Function<Claims, T> resolver
+    ) {
+
         Claims claims = Jwts.parser()
                 .verifyWith(getSigningKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+
         return resolver.apply(claims);
     }
 }

@@ -11,9 +11,11 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 public class VentaResponse {
+
     private Long id;
     private String vendedorUsername;
     private String metodoPago;
+    private String estado;
     private BigDecimal total;
     private LocalDateTime fecha;
     private List<DetalleVentaResponse> detalles;
@@ -23,9 +25,13 @@ public class VentaResponse {
                 v.getId(),
                 v.getVendedor().getUsername(),
                 v.getMetodoPago().name(),
+                v.getEstado().name(),
                 v.getTotal(),
                 v.getFecha(),
-                v.getDetalles().stream().map(DetalleVentaResponse::desde).toList()
+                v.getDetalles()
+                        .stream()
+                        .map(DetalleVentaResponse::desde)
+                        .toList()
         );
     }
 }

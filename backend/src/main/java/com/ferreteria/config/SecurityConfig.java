@@ -25,70 +25,186 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+
     private final UserDetailsService userDetailsService;
     private final JwtAuthFilter jwtAuthFilter;
+
+
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+
+
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+
+        DaoAuthenticationProvider provider =
+                new DaoAuthenticationProvider();
+
         provider.setUserDetailsService(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder());
+
         return provider;
     }
 
+
+
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration config
+    ) throws Exception {
+
         return config.getAuthenticationManager();
     }
 
+
+
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http)
+            throws Exception {
+
+
         http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(csrf -> csrf.disable())
-            .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()
-                // Consultar productos/categorias: ambos roles
-                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/productos/**").hasAnyRole("ADMIN", "VENDEDOR")
-                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/categorias/**").hasAnyRole("ADMIN", "VENDEDOR")
-                // Ajustar stock (ingreso/egreso manual): ambos roles pueden registrar el movimiento
-                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/productos/*/ajustar-stock").hasAnyRole("ADMIN", "VENDEDOR")
-                // Ventas: tanto ADMIN como VENDEDOR pueden registrar y consultar ventas
-                .requestMatchers("/api/ventas/**").hasAnyRole("ADMIN", "VENDEDOR")
-                // Reportes: informacion sensible del negocio, solo ADMIN
-                .requestMatchers("/api/reportes/**").hasRole("ADMIN")
-                // Cualquier usuario logueado puede cambiar su propia contraseña
-                .requestMatchers("/api/usuarios/mi-perfil/**").authenticated()
-                // Gestion de usuarios (crear, listar, habilitar, resetear password de otros): solo ADMIN
-                .requestMatchers("/api/usuarios/**").hasRole("ADMIN")
-                // Crear/editar/eliminar productos y categorias: solo ADMIN
-                .requestMatchers("/api/productos/**").hasRole("ADMIN")
-                .requestMatchers("/api/categorias/**").hasRole("ADMIN")
-                .anyRequest().authenticated()
+
+            .cors(cors ->
+                    cors.configurationSource(corsConfigurationSource())
             )
+
+            .csrf(csrf ->
+                    csrf.disable()
+            )
+
+
+            .sessionManagement(session ->
+                    session.sessionCreationPolicy(
+                            SessionCreationPolicy.STATELESS
+                    )
+            )
+
+
+            .authorizeHttpRequests(auth -> auth
+
+
+                    // LOGIN LIBRE
+                    .requestMatchers(
+                            "/api/auth/**"
+                    )
+                    .permitAll()
+
+
+                    // ARCHIVOS DEL FRONTEND (React ya compilado, servido por Spring Boot)
+                    // Sin esto, Spring Security bloquea con 403 incluso la pantalla de login.
+                    .requestMatchers(
+                            "/",
+                            "/index.html",
+                            "/assets/**",
+                            "/favicon.ico",
+                            "/*.svg",
+                            "/*.png",
+                            "/*.ico",
+                            "/*.json"
+                    )
+                    .permitAll()
+
+
+
+                    // VENTAS CON JWT
+                    .requestMatchers(
+                            "/api/ventas/**"
+                    )
+                    .authenticated()
+
+
+
+                    // CATEGORIAS CON JWT
+                    .requestMatchers(
+                            "/api/categorias/**"
+                    )
+                    .authenticated()
+
+
+
+                    // PRODUCTOS CON JWT
+                    .requestMatchers(
+                            "/api/productos/**"
+                    )
+                    .authenticated()
+
+
+
+                    // TODO LO DEMÁS
+                    .anyRequest()
+                    .authenticated()
+
+            )
+
+
             .authenticationProvider(authenticationProvider())
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
+
+            .addFilterBefore(
+                    jwtAuthFilter,
+                    UsernamePasswordAuthenticationFilter.class
+            );
+
 
         return http.build();
     }
 
+
+
+
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        // En desarrollo el front de React corre en localhost:5173 (Vite) o 3000 (CRA)
-        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
+
+        CorsConfiguration configuration =
+                new CorsConfiguration();
+
+
+        configuration.setAllowedOrigins(
+                List.of(
+                        "http://localhost:5173",
+                        "http://localhost:3000",
+                        "http://localhost:8080"
+                )
+        );
+
+
+        configuration.setAllowedMethods(
+                List.of(
+                        "GET",
+                        "POST",
+                        "PUT",
+                        "DELETE",
+                        "PATCH",
+                        "OPTIONS"
+                )
+        );
+
+
+        configuration.setAllowedHeaders(
+                List.of("*")
+        );
+
+
         configuration.setAllowCredentials(true);
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
+
+
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+
+
+        source.registerCorsConfiguration(
+                "/**",
+                configuration
+        );
+
+
         return source;
     }
 }
