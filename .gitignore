@@ -4,3 +4,10 @@ target/
 .env
 .idea/
 *.iml
+.vscode/
+backups/
+*.dump
+*.log
+Thumbs.db
+
+backend/src/main/resources/static/
